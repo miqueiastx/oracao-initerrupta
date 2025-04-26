@@ -1,6 +1,6 @@
-// Importações Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js";
-import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js";
+// Importações Firebase Compat
+import firebase from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+import 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
 
 // Configuração Firebase
 const firebaseConfig = {
@@ -14,8 +14,10 @@ const firebaseConfig = {
 };
 
 // Inicializa Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const database = firebase.database();
 
 // Funções para Admin
 async function salvarPeriodo() {
@@ -30,7 +32,7 @@ async function salvarPeriodo() {
     return;
   }
   try {
-    await set(ref(database, 'periodo'), {
+    await firebase.database().ref('periodo').set({
       inicio: dataInicio,
       fim: dataFim
     });
@@ -61,7 +63,7 @@ async function salvarMotivos() {
     return;
   }
   try {
-    await set(ref(database, 'motivos'), {
+    await firebase.database().ref('motivos').set({
       texto: motivos
     });
     Swal.fire({
@@ -82,14 +84,13 @@ window.salvarMotivos = salvarMotivos; // Expondo para o escopo global
 
 // Funções para o Usuário
 async function carregarDados() {
-  const dbRef = ref(database);
   try {
-    const snapshot = await get(child(dbRef, 'periodo'));
-    const motivosSnapshot = await get(child(dbRef, 'motivos'));
+    const periodoSnapshot = await firebase.database().ref('periodo').get();
+    const motivosSnapshot = await firebase.database().ref('motivos').get();
 
     const hoje = new Date();
-    if (snapshot.exists()) {
-      const { inicio, fim } = snapshot.val();
+    if (periodoSnapshot.exists()) {
+      const { inicio, fim } = periodoSnapshot.val();
       const inicioData = new Date(inicio);
       const fimData = new Date(fim);
 
@@ -99,18 +100,17 @@ async function carregarDados() {
       }
     }
 
-    const motivosDiv = document.getElementById('motivos-oracao'); // Assumindo que há um elemento com este ID no index.html
+    const motivosDiv = document.getElementById('motivos-oracao');
     if (motivosDiv && motivosSnapshot.exists()) {
       motivosDiv.innerHTML = `<h3>Motivos de Oração</h3><p>${motivosSnapshot.val().texto}</p>`;
     }
 
-    const horariosDiv = document.getElementById('horarios'); // Assumindo que há um elemento com este ID no index.html
+    const horariosDiv = document.getElementById('horarios');
     if (horariosDiv) {
       await gerarHorarios(horariosDiv);
     }
   } catch (error) {
     console.error("Erro ao carregar dados:", error);
-    // Tratar o erro de forma apropriada para o usuário
     document.body.innerHTML = "<p>Ocorreu um erro ao carregar os dados.</p>";
   }
 }
@@ -120,26 +120,27 @@ async function gerarHorarios(horariosDiv) {
   horariosDiv.innerHTML = "";
 
   try {
+    const horariosSnapshot = await firebase.database().ref('horarios').get();
+    const horariosData = horariosSnapshot.val();
+
     for (let h = 0; h < 24; h++) {
       for (let m = 0; m < 60; m += 15) {
         const hora = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        const horarioRef = ref(database, 'horarios/' + hora);
-        const snap = await get(horarioRef);
+        const horarioRef = firebase.database().ref('horarios/' + hora);
+        const horarioOcupado = horariosData && horariosData[hora] && horariosData[hora].nome;
+        const nomeUsuarioLocal = localStorage.getItem('nome_' + hora);
 
         const div = document.createElement('div');
         div.className = "horario";
 
-        if (snap.exists()) {
-          const nomeSalvo = snap.val().nome;
-          const nomeUsuario = localStorage.getItem('nome_' + hora);
-
-          if (nomeSalvo && nomeUsuario === nomeSalvo) {
+        if (horarioOcupado) {
+          if (nomeUsuarioLocal === horarioOcupado) {
             div.innerHTML = `<strong>${hora}</strong> - Você reservou`;
             const btnExcluir = document.createElement('button');
             btnExcluir.textContent = "Cancelar";
             btnExcluir.onclick = async () => {
               try {
-                await remove(horarioRef);
+                await horarioRef.remove();
                 localStorage.removeItem('nome_' + hora);
                 Swal.fire({
                   icon: 'success',
@@ -176,7 +177,7 @@ async function gerarHorarios(horariosDiv) {
 
             if (nome) {
               try {
-                await set(horarioRef, { nome });
+                await horarioRef.set({ nome });
                 localStorage.setItem('nome_' + hora, nome);
                 Swal.fire({
                   icon: 'success',
