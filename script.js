@@ -1,113 +1,128 @@
-// Configuração do Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+// Importações Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js";
+import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js";
 
+// Configuração Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyBSMuT4evMVh6Yz3zDrjMXlCmbuQviNEsk",
-    authDomain: "oracao-initerrupta.firebaseapp.com",
-    databaseURL: "https://oracao-initerrupta-default-rtdb.firebaseio.com",
-    projectId: "oracao-initerrupta",
-    storageBucket: "oracao-initerrupta.firebasestorage.app",
-    messagingSenderId: "1011751489589",
-    appId: "1:1011751489589:web:2c0dc806b92da56323217c"
+  apiKey: "AIzaSyBSMuT4evMVh6Yz3zDrjMXlCmbuQviNEsk",
+  authDomain: "oracao-initerrupta.firebaseapp.com",
+  databaseURL: "https://oracao-initerrupta-default-rtdb.firebaseio.com",
+  projectId: "oracao-initerrupta",
+  storageBucket: "oracao-initerrupta.appspot.com",
+  messagingSenderId: "1011751489589",
+  appId: "1:1011751489589:web:2c0dc806b92da56323217c"
 };
 
+// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-const url = window.location.pathname;
-const isAdmin = url.includes('admin');
-
-// Funções comuns
-function gerarHorarios() {
-    const horarios = [];
-    let hora = 0, minuto = 0;
-    for (let i = 0; i < 96; i++) {
-        const h = hora.toString().padStart(2, '0');
-        const m = minuto.toString().padStart(2, '0');
-        horarios.push(`${h}:${m}`);
-        minuto += 15;
-        if (minuto === 60) {
-            minuto = 0;
-            hora++;
-        }
-    }
-    return horarios;
-}
-
-function criarBotao(horario, ocupado, nomeUsuario) {
-    const button = document.createElement('button');
-    button.innerText = ocupado ? (nomeUsuario ? nomeUsuario : 'Ocupado') : horario;
-    button.disabled = ocupado && !nomeUsuario;
-
-    button.onclick = async () => {
-        if (!ocupado) {
-            const nome = prompt("Digite seu nome:");
-            if (nome) {
-                await set(ref(database, 'horarios/' + horario), nome);
-            }
-        } else if (nomeUsuario) {
-            const confirmar = confirm("Deseja remover seu nome deste horário?");
-            if (confirmar) {
-                await remove(ref(database, 'horarios/' + horario));
-            }
-        }
-    };
-    return button;
-}
-
-function carregarMotivos() {
-    onValue(ref(database, 'motivos'), snapshot => {
-        const motivosDiv = document.getElementById('motivos');
-        motivosDiv.innerText = snapshot.val() || "Sem motivos cadastrados.";
-    });
-}
-
-async function carregarHorarios() {
-    const periodoSnap = await get(ref(database, 'periodo'));
-    const periodo = periodoSnap.val();
-    const hoje = new Date();
-
-    if (!periodo || hoje < new Date(periodo.inicio) || hoje > new Date(periodo.fim)) {
-        document.body.innerHTML = "<h1>Fora do período disponível para cadastro.</h1>";
+// Funções para o Admin
+window.salvarPeriodo = async function () {
+    const dataInicio = document.getElementById('dataInicio').value;
+    const dataFim = document.getElementById('dataFim').value;
+    if (!dataInicio || !dataFim) {
+        alert("Preencha as duas datas.");
         return;
     }
-
-    onValue(ref(database, 'horarios'), snapshot => {
-        const horariosDiv = isAdmin ? document.getElementById('horariosAdmin') : document.getElementById('horarios');
-        horariosDiv.innerHTML = '';
-
-        const horarios = gerarHorarios();
-        const dados = snapshot.val() || {};
-
-        horarios.forEach(horario => {
-            const ocupado = dados[horario];
-            const nomeUsuario = ocupado ? ocupado : null;
-            const button = criarBotao(horario, !!ocupado, nomeUsuario);
-            horariosDiv.appendChild(button);
-        });
+    await set(ref(database, 'periodo'), {
+        inicio: dataInicio,
+        fim: dataFim
     });
+    alert("Período informado foi salvo!");
 }
 
-async function definirPeriodo() {
-    const inicio = document.getElementById('startDate').value;
-    const fim = document.getElementById('endDate').value;
-    if (inicio && fim) {
-        await set(ref(database, 'periodo'), {
-            inicio: inicio,
-            fim: fim
-        });
-        alert("Período definido com sucesso.");
+window.salvarMotivos = async function () {
+    const motivos = document.getElementById('motivos').value;
+    if (!motivos) {
+        alert("Preencha os motivos.");
+        return;
+    }
+    await set(ref(database, 'motivos'), {
+        texto: motivos
+    });
+    alert("Motivos de oração salvos!");
+}
+
+// Funções para o Usuário
+async function carregarDados() {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, 'periodo'));
+    const motivosSnapshot = await get(child(dbRef, 'motivos'));
+
+    const hoje = new Date();
+    if (snapshot.exists()) {
+        const { inicio, fim } = snapshot.val();
+        const inicioData = new Date(inicio);
+        const fimData = new Date(fim);
+
+        if (hoje < inicioData || hoje > fimData) {
+            document.body.innerHTML = "<h2>Fora do período de inscrição.</h2>";
+            return;
+        }
+    }
+
+    if (motivosSnapshot.exists()) {
+        document.getElementById('motivos').innerHTML = `<h3>Motivos de Oração</h3><p>${motivosSnapshot.val().texto}</p>`;
+    }
+
+    gerarHorarios();
+}
+
+async function gerarHorarios() {
+    const horariosDiv = document.getElementById('horarios');
+    horariosDiv.innerHTML = "";
+
+    for (let h = 0; h < 24; h++) {
+        for (let m = 0; m < 60; m += 15) {
+            const hora = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            const horarioRef = ref(database, 'horarios/' + hora);
+            const snap = await get(horarioRef);
+
+            const div = document.createElement('div');
+            div.className = "horario";
+
+            if (snap.exists()) {
+                const nomeSalvo = snap.val().nome;
+                const nomeUsuario = localStorage.getItem('nome_' + hora);
+
+                if (nomeSalvo && nomeUsuario === nomeSalvo) {
+                    div.innerHTML = `<strong>${hora}</strong> - Você reservou`;
+                    const btnExcluir = document.createElement('button');
+                    btnExcluir.textContent = "Cancelar";
+                    btnExcluir.onclick = async () => {
+                        await remove(horarioRef);
+                        localStorage.removeItem('nome_' + hora);
+                        carregarDados();
+                    };
+                    div.appendChild(btnExcluir);
+                } else {
+                    div.classList.add('ocupado');
+                    div.innerHTML = `<strong>${hora}</strong> - Ocupado`;
+                }
+            } else {
+                div.innerHTML = `<strong>${hora}</strong>`;
+                const btnEscolher = document.createElement('button');
+                btnEscolher.textContent = "Reservar";
+                btnEscolher.onclick = async () => {
+                    const nome = prompt("Digite seu nome:");
+                    if (nome) {
+                        await set(horarioRef, { nome });
+                        localStorage.setItem('nome_' + hora, nome);
+                        carregarDados();
+                    }
+                };
+                div.appendChild(btnEscolher);
+            }
+
+            horariosDiv.appendChild(div);
+        }
     }
 }
 
-async function salvarMotivos() {
-    const motivos = document.getElementById('motivosInput').value;
-    await set(ref(database, 'motivos'), motivos);
-    alert("Motivos salvos com sucesso.");
+if (window.location.pathname.includes("admin")) {
+    // Página admin
+} else {
+    // Página usuário
+    carregarDados();
 }
-
-if (!isAdmin) {
-    carregarMotivos();
-}
-carregarHorarios();
