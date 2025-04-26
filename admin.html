@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Oração Initerrupta</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Administração</h1>
+
+    <label for="startDate">Data Inicial:</label>
+    <input type="date" id="startDate">
+    
+    <label for="endDate">Data Final:</label>
+    <input type="date" id="endDate">
+
+    <button onclick="definirPeriodo()">Definir Período</button>
+
+    <h2>Editar Motivos de Oração:</h2>
+    <textarea id="motivosInput" rows="6"></textarea>
+    <button onclick="salvarMotivos()">Salvar Motivos</button>
+
+    <div id="horariosAdmin"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
