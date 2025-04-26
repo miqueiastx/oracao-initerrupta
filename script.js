@@ -1,5 +1,5 @@
 // Importações Firebase Compat
-import firebase from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+import * as firebase from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
 import 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
 
 // Configuração Firebase
@@ -32,7 +32,7 @@ async function salvarPeriodo() {
     return;
   }
   try {
-    await firebase.database().ref('periodo').set({
+    await database.ref('periodo').set({
       inicio: dataInicio,
       fim: dataFim
     });
@@ -63,7 +63,7 @@ async function salvarMotivos() {
     return;
   }
   try {
-    await firebase.database().ref('motivos').set({
+    await database.ref('motivos').set({
       texto: motivos
     });
     Swal.fire({
@@ -85,8 +85,8 @@ window.salvarMotivos = salvarMotivos; // Expondo para o escopo global
 // Funções para o Usuário
 async function carregarDados() {
   try {
-    const periodoSnapshot = await firebase.database().ref('periodo').get();
-    const motivosSnapshot = await firebase.database().ref('motivos').get();
+    const periodoSnapshot = await database.ref('periodo').get();
+    const motivosSnapshot = await database.ref('motivos').get();
 
     const hoje = new Date();
     if (periodoSnapshot.exists()) {
@@ -120,13 +120,13 @@ async function gerarHorarios(horariosDiv) {
   horariosDiv.innerHTML = "";
 
   try {
-    const horariosSnapshot = await firebase.database().ref('horarios').get();
+    const horariosSnapshot = await database.ref('horarios').get();
     const horariosData = horariosSnapshot.val();
 
     for (let h = 0; h < 24; h++) {
       for (let m = 0; m < 60; m += 15) {
         const hora = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        const horarioRef = firebase.database().ref('horarios/' + hora);
+        const horarioRef = database.ref('horarios/' + hora);
         const horarioOcupado = horariosData && horariosData[hora] && horariosData[hora].nome;
         const nomeUsuarioLocal = localStorage.getItem('nome_' + hora);
 
