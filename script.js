@@ -1,4 +1,7 @@
 // Configuração do Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 const firebaseConfig = {
     apiKey: "AIzaSyBSMuT4evMVh6Yz3zDrjMXlCmbuQviNEsk",
     authDomain: "oracao-initerrupta.firebaseapp.com",
@@ -9,8 +12,8 @@ const firebaseConfig = {
     appId: "1:1011751489589:web:2c0dc806b92da56323217c"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
 const url = window.location.pathname;
 const isAdmin = url.includes('admin');
@@ -19,7 +22,7 @@ const isAdmin = url.includes('admin');
 function gerarHorarios() {
     const horarios = [];
     let hora = 0, minuto = 0;
-    for (let i = 0; i < 96; i++) { // 96 blocos de 15 min em 24h
+    for (let i = 0; i < 96; i++) {
         const h = hora.toString().padStart(2, '0');
         const m = minuto.toString().padStart(2, '0');
         horarios.push(`${h}:${m}`);
@@ -37,16 +40,16 @@ function criarBotao(horario, ocupado, nomeUsuario) {
     button.innerText = ocupado ? (nomeUsuario ? nomeUsuario : 'Ocupado') : horario;
     button.disabled = ocupado && !nomeUsuario;
 
-    button.onclick = () => {
+    button.onclick = async () => {
         if (!ocupado) {
             const nome = prompt("Digite seu nome:");
             if (nome) {
-                database.ref('horarios/' + horario).set(nome);
+                await set(ref(database, 'horarios/' + horario), nome);
             }
         } else if (nomeUsuario) {
             const confirmar = confirm("Deseja remover seu nome deste horário?");
             if (confirmar) {
-                database.ref('horarios/' + horario).remove();
+                await remove(ref(database, 'horarios/' + horario));
             }
         }
     };
@@ -54,52 +57,54 @@ function criarBotao(horario, ocupado, nomeUsuario) {
 }
 
 function carregarMotivos() {
-    database.ref('motivos').on('value', snapshot => {
+    onValue(ref(database, 'motivos'), snapshot => {
         const motivosDiv = document.getElementById('motivos');
         motivosDiv.innerText = snapshot.val() || "Sem motivos cadastrados.";
     });
 }
 
-function carregarHorarios() {
-    database.ref('periodo').once('value').then(periodoSnap => {
-        const periodo = periodoSnap.val();
-        const hoje = new Date();
-        if (!periodo || hoje < new Date(periodo.inicio) || hoje > new Date(periodo.fim)) {
-            document.body.innerHTML = "<h1>Fora do período disponível para cadastro.</h1>";
-            return;
-        }
+async function carregarHorarios() {
+    const periodoSnap = await get(ref(database, 'periodo'));
+    const periodo = periodoSnap.val();
+    const hoje = new Date();
 
-        database.ref('horarios').on('value', snapshot => {
-            const horariosDiv = isAdmin ? document.getElementById('horariosAdmin') : document.getElementById('horarios');
-            horariosDiv.innerHTML = '';
+    if (!periodo || hoje < new Date(periodo.inicio) || hoje > new Date(periodo.fim)) {
+        document.body.innerHTML = "<h1>Fora do período disponível para cadastro.</h1>";
+        return;
+    }
 
-            const horarios = gerarHorarios();
-            const dados = snapshot.val() || {};
+    onValue(ref(database, 'horarios'), snapshot => {
+        const horariosDiv = isAdmin ? document.getElementById('horariosAdmin') : document.getElementById('horarios');
+        horariosDiv.innerHTML = '';
 
-            horarios.forEach(horario => {
-                const ocupado = dados[horario];
-                const nomeUsuario = ocupado ? ocupado : null;
-                const button = criarBotao(horario, !!ocupado, (isAdmin || (nomeUsuario && nomeUsuario === sessionStorage.getItem(horario))) ? nomeUsuario : null);
-                horariosDiv.appendChild(button);
-            });
+        const horarios = gerarHorarios();
+        const dados = snapshot.val() || {};
+
+        horarios.forEach(horario => {
+            const ocupado = dados[horario];
+            const nomeUsuario = ocupado ? ocupado : null;
+            const button = criarBotao(horario, !!ocupado, nomeUsuario);
+            horariosDiv.appendChild(button);
         });
     });
 }
 
-function definirPeriodo() {
+async function definirPeriodo() {
     const inicio = document.getElementById('startDate').value;
     const fim = document.getElementById('endDate').value;
     if (inicio && fim) {
-        database.ref('periodo').set({
+        await set(ref(database, 'periodo'), {
             inicio: inicio,
             fim: fim
         });
+        alert("Período definido com sucesso.");
     }
 }
 
-function salvarMotivos() {
+async function salvarMotivos() {
     const motivos = document.getElementById('motivosInput').value;
-    database.ref('motivos').set(motivos);
+    await set(ref(database, 'motivos'), motivos);
+    alert("Motivos salvos com sucesso.");
 }
 
 if (!isAdmin) {
