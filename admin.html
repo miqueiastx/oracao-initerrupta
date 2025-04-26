@@ -3,28 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Oração Initerrupta</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Administração - Oração Initerrupta</title>
+
+    <!-- Firebase -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+    <!-- Script principal -->
+    <script type="module" src="script.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        input, textarea, button {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Apenas Administração</h1>
+    <h1>Administração - Oração Initerrupta</h1>
 
-    <label for="startDate">Data Inicial:</label>
-    <input type="date" id="startDate">
-    
-    <label for="endDate">Data Final:</label>
-    <input type="date" id="endDate">
+    <h2>Definir Período</h2>
+    <input type="date" id="dataInicio">
+    <input type="date" id="dataFim">
+    <button onclick="salvarPeriodo()">Salvar Período</button>
 
-    <button onclick="definirPeriodo()">Definir Período</button>
-
-    <h2>Editar Motivos de Oração:</h2>
-    <textarea id="motivosInput" rows="6"></textarea>
+    <h2>Motivos de Oração</h2>
+    <textarea id="motivos" rows="5"></textarea>
     <button onclick="salvarMotivos()">Salvar Motivos</button>
-
-    <div id="horariosAdmin"></div>
-
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
