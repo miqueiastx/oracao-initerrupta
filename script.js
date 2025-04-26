@@ -17,31 +17,47 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-// Funções para o Admin
+// Funções para Admin
 window.salvarPeriodo = async function () {
     const dataInicio = document.getElementById('dataInicio').value;
     const dataFim = document.getElementById('dataFim').value;
     if (!dataInicio || !dataFim) {
-        alert("Preencha as duas datas.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Preencha as duas datas corretamente.'
+        });
         return;
     }
     await set(ref(database, 'periodo'), {
         inicio: dataInicio,
         fim: dataFim
     });
-    alert("Período informado foi salvo!");
+    Swal.fire({
+      icon: 'success',
+      title: 'Sucesso',
+      text: 'Período salvo com sucesso!'
+    });
 }
 
 window.salvarMotivos = async function () {
     const motivos = document.getElementById('motivos').value;
     if (!motivos) {
-        alert("Preencha os motivos.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Preencha os motivos.'
+        });
         return;
     }
     await set(ref(database, 'motivos'), {
         texto: motivos
     });
-    alert("Motivos de oração salvos!");
+    Swal.fire({
+      icon: 'success',
+      title: 'Sucesso',
+      text: 'Motivos de oração salvos com sucesso!'
+    });
 }
 
 // Funções para o Usuário
@@ -93,6 +109,11 @@ async function gerarHorarios() {
                     btnExcluir.onclick = async () => {
                         await remove(horarioRef);
                         localStorage.removeItem('nome_' + hora);
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Cancelado',
+                          text: `Horário ${hora} cancelado com sucesso.`
+                        });
                         carregarDados();
                     };
                     div.appendChild(btnExcluir);
@@ -105,10 +126,22 @@ async function gerarHorarios() {
                 const btnEscolher = document.createElement('button');
                 btnEscolher.textContent = "Reservar";
                 btnEscolher.onclick = async () => {
-                    const nome = prompt("Digite seu nome:");
+                    const { value: nome } = await Swal.fire({
+                      title: 'Reservar horário',
+                      input: 'text',
+                      inputLabel: 'Digite seu nome',
+                      inputPlaceholder: 'Seu nome',
+                      showCancelButton: true
+                    });
+
                     if (nome) {
                         await set(horarioRef, { nome });
                         localStorage.setItem('nome_' + hora, nome);
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Reservado!',
+                          text: `Horário ${hora} reservado com sucesso.`
+                        });
                         carregarDados();
                     }
                 };
@@ -120,9 +153,9 @@ async function gerarHorarios() {
     }
 }
 
+// Detecta se é página admin ou index
 if (window.location.pathname.includes("admin")) {
     // Página admin
 } else {
-    // Página usuário
     carregarDados();
 }
