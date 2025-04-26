@@ -13,11 +13,17 @@ const firebaseConfig = {
   appId: "1:1011751489589:web:2c0dc806b92da56323217c"
 };
 
-// Inicializa Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+let database;
+
+function initializeFirebase() {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  database = firebase.database();
 }
-const database = firebase.database();
+
+// Inicializa Firebase
+initializeFirebase();
 
 // Funções para Admin
 async function salvarPeriodo() {
