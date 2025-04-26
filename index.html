@@ -3,15 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oração Initerrupta - ICM QUATRO-BOCAS</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Oração Initerrupta</title>
+
+    <!-- Firebase -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+    <!-- Script principal -->
+    <script type="module" src="script.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .horario {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+        }
+        .ocupado {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            margin-top: 5px;
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
     <h1>Oração Initerrupta</h1>
+
     <div id="motivos"></div>
+
+    <h2>Escolha um horário:</h2>
     <div id="horarios"></div>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
