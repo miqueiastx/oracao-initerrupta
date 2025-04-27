@@ -1,6 +1,7 @@
 // Importações Firebase Compat
 import * as firebase from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
 import 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+import { initializeApp } from "firebase/app";
 
 // Configuração Firebase
 const firebaseConfig = {
@@ -8,22 +9,13 @@ const firebaseConfig = {
   authDomain: "oracao-initerrupta.firebaseapp.com",
   databaseURL: "https://oracao-initerrupta-default-rtdb.firebaseio.com",
   projectId: "oracao-initerrupta",
-  storageBucket: "oracao-initerrupta.appspot.com",
+  storageBucket: "oracao-initerrupta.firebasestorage.app",
   messagingSenderId: "1011751489589",
   appId: "1:1011751489589:web:2c0dc806b92da56323217c"
 };
 
-let database;
-
-function initializeFirebase() {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
-  database = firebase.database();
-}
-
-// Inicializa Firebase
-initializeFirebase();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 // Funções para Admin
 async function salvarPeriodo() {
